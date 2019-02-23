@@ -25,7 +25,10 @@ package com.iiordanov.bVNC;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
@@ -49,7 +52,6 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.os.Vibrator;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -74,6 +76,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -112,12 +115,22 @@ public class RemoteCanvasActivity extends AppCompatActivity implements OnKeyList
     private MenuItem[] scalingModeMenuItems;
     private InputHandler inputModeHandlers[];
     private ConnectionBean connection;
-    private static final int inputModeIds[] = { R.id.itemInputTouchpad,
+    static final int[] inputModeIds = { R.id.itemInputTouchpad,
                                                 R.id.itemInputTouchPanZoomMouse,
                                                 R.id.itemInputDragPanZoomMouse,
                                                 R.id.itemInputSingleHanded };
     private static final int scalingModeIds[] = { R.id.itemZoomable, R.id.itemFitToScreen,
                                                   R.id.itemOneToOne};
+
+    static final Map<Integer, String> inputModeMap;
+    static {
+        Map<Integer, String> temp = new HashMap<>();
+        temp.put(R.id.itemInputTouchpad, InputHandlerTouchpad.ID);
+        temp.put(R.id.itemInputDragPanZoomMouse, InputHandlerDirectDragPan.ID);
+        temp.put(R.id.itemInputTouchPanZoomMouse, InputHandlerDirectSwipePan.ID);
+        temp.put(R.id.itemInputSingleHanded, InputHandlerSingleHanded.ID);
+        inputModeMap = Collections.unmodifiableMap(temp);
+    }
 
     Panner panner;
     SSHConnection sshConnection;
@@ -146,25 +159,64 @@ public class RemoteCanvasActivity extends AppCompatActivity implements OnKeyList
     volatile boolean softKeyboardUp;
     Toolbar toolbar;
 
-    
+    /**
+     * This runnable enables immersive mode.
+     */
+    private Runnable immersiveEnabler = new Runnable() {
+        public void run() {
+            try {
+                if (Utils.querySharedPreferenceBoolean(RemoteCanvasActivity.this,
+                        Constants.disableImmersiveTag)) {
+                    return;
+                }
+
+                if (Constants.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                    canvas.setSystemUiVisibility(
+                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                }
+
+            } catch (Exception e) { }
+        }
+    };
+
     /**
      * Enables sticky immersive mode if supported.
      */
     private void enableImmersive() {
-        if (Utils.querySharedPreferenceBoolean(this, Constants.disableImmersiveTag))
-            return;
-        
-        if (Constants.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
-            canvas.setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-        }
+        handler.removeCallbacks(immersiveEnabler);
+        handler.postDelayed(immersiveEnabler, 200);
     }
-    
+
+    /**
+     * This runnable disables immersive mode.
+     */
+    private Runnable immersiveDisabler = new Runnable() {
+        public void run() {
+            try {
+                if (Constants.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                    canvas.setSystemUiVisibility(
+                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+                }
+
+            } catch (Exception e) { }
+        }
+    };
+
+    /**
+     * Disables sticky immersive mode.
+     */
+    private void disableImmersive() {
+        handler.removeCallbacks(immersiveDisabler);
+        handler.postDelayed(immersiveDisabler, 200);
+    }
+
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
             super.onWindowFocusChanged(hasFocus);
@@ -199,7 +251,21 @@ public class RemoteCanvasActivity extends AppCompatActivity implements OnKeyList
         
         if (Utils.querySharedPreferenceBoolean(this, Constants.forceLandscapeTag))
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-        
+
+        View decorView = getWindow().getDecorView();
+        decorView.setOnSystemUiVisibilityChangeListener
+                (new View.OnSystemUiVisibilityChangeListener() {
+                    @Override
+                    public void onSystemUiVisibilityChange(int visibility) {
+                        try {
+                            correctAfterRotation();
+                        } catch (Exception e) {
+                            //e.printStackTrace();
+                        }
+                        //handler.postDelayed(rotationCorrector, 300);
+                    }
+                });
+
         database = ((App)getApplication()).getDatabase();
         
         Intent i = getIntent();
@@ -367,7 +433,6 @@ public class RemoteCanvasActivity extends AppCompatActivity implements OnKeyList
                         }
                     }
                     setKeyStowDrawableAndVisibility();
-                    enableImmersive();
              }
         });
 
@@ -853,7 +918,8 @@ public class RemoteCanvasActivity extends AppCompatActivity implements OnKeyList
         float newScale = canvas.canvasZoomer.getZoomFactor();
         canvas.canvasZoomer.changeZoom(this, oldScale/newScale, 0, 0);
         newScale = canvas.canvasZoomer.getZoomFactor();
-        if (newScale <= oldScale) {
+        if (newScale <= oldScale &&
+                canvas.canvasZoomer.getScaleType() != ImageView.ScaleType.FIT_CENTER) {
             canvas.absoluteXPosition = x;
             canvas.absoluteYPosition = y;
             canvas.resetScroll();
@@ -901,6 +967,7 @@ public class RemoteCanvasActivity extends AppCompatActivity implements OnKeyList
     public void onPanelClosed (int featureId, Menu menu) {
         super.onPanelClosed(featureId, menu);
         showToolbar();
+        enableImmersive();
     }
     
     @Override
@@ -910,6 +977,7 @@ public class RemoteCanvasActivity extends AppCompatActivity implements OnKeyList
             handler.removeCallbacks(toolbarHider);
             updateScalingMenu();
             updateInputMenu();
+            disableImmersive();
         }
         return super.onMenuOpened(featureId, menu);
     }

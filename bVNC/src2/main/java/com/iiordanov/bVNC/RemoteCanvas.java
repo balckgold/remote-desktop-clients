@@ -390,8 +390,10 @@ public class RemoteCanvas extends android.support.v7.widget.AppCompatImageView i
         //LibFreeRDP.setDataDirectory(session.getInstance(), getContext().getFilesDir().toString());
 
         BookmarkBase.DebugSettings debugSettings = session.getBookmark().getDebugSettings();
-        debugSettings.setAsyncChannel(false);
-        debugSettings.setAsyncTransport(false);
+        debugSettings.setDebugLevel("DEBUG");
+        //debugSettings.setAsyncUpdate(false);
+        //debugSettings.setAsyncInput(false);
+        //debugSettings.setAsyncChannel(false);
 
         // Set screen settings to native res if instructed to, or if height or width are too small.
         BookmarkBase.ScreenSettings screenSettings = session.getBookmark().getActiveScreenSettings();
@@ -417,6 +419,7 @@ public class RemoteCanvas extends android.support.v7.widget.AppCompatImageView i
         advancedSettings.setConsoleMode(connection.getConsoleMode());
         advancedSettings.setRedirectSound(connection.getRemoteSoundType());
         advancedSettings.setRedirectMicrophone(connection.getEnableRecording());
+        advancedSettings.setSecurity(0); // Automatic negotiation
 
         rdpcomm = new RdpCommunicator(session);
         rfbconn = rdpcomm;
@@ -426,7 +429,7 @@ public class RemoteCanvas extends android.support.v7.widget.AppCompatImageView i
         session.setUIEventListener(RemoteCanvas.this);
         LibFreeRDP.setEventListener(RemoteCanvas.this);
 
-        session.connect();
+        session.connect(this.getContext());
         pd.dismiss();
     }
 
@@ -927,6 +930,8 @@ public class RemoteCanvas extends android.support.v7.widget.AppCompatImageView i
      */
     void resetScroll() {
         float scale = getZoomFactor();
+        //android.util.Log.d(TAG, "resetScroll: " + (absoluteXPosition - shiftX) * scale + ", "
+        //                                        + (absoluteYPosition - shiftY) * scale);
         scrollTo((int) ((absoluteXPosition - shiftX) * scale),
                 (int) ((absoluteYPosition - shiftY) * scale));
     }
@@ -1008,6 +1013,7 @@ public class RemoteCanvas extends android.support.v7.widget.AppCompatImageView i
      * @return True if the pan changed the view (did not move view out of bounds); false otherwise
      */
     public boolean relativePan(int dX, int dY) {
+        //android.util.Log.d(TAG, "relativePan: " + dX + ", " + dY);
 
         // We only pan if the current scaling is able to pan.
         if (canvasZoomer != null && !canvasZoomer.isAbleToPan())
@@ -1047,6 +1053,8 @@ public class RemoteCanvas extends android.support.v7.widget.AppCompatImageView i
      * @param y
      */
     public void absolutePan(int x, int y) {
+        //android.util.Log.d(TAG, "absolutePan: " + x + ", " + y);
+
         if (canvasZoomer != null) {
             int vW = getVisibleWidth();
             int vH = getVisibleHeight();

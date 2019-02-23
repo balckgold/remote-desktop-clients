@@ -52,6 +52,8 @@ import android.content.SharedPreferences.Editor;
 import android.content.Intent;
 import net.sqlcipher.database.SQLiteDatabase;
 import android.net.Uri;
+import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
 import android.util.Log;
 import android.view.ViewConfiguration;
@@ -112,7 +114,13 @@ public class Utils {
         showMessage(_context, "Error!", message, android.R.drawable.ic_dialog_alert, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                ((Activity) _context).finish();
+                if ( _context instanceof AppCompatActivity ) {
+                    ((AppCompatActivity) _context).finish();
+                } else if ( _context instanceof FragmentActivity ) {
+                    ((FragmentActivity) _context).finish();
+                } else if ( _context instanceof Activity ) {
+                    ((Activity) _context).finish();
+                }
             }
         });
     }
@@ -275,17 +283,47 @@ public class Utils {
     }
     
     public static boolean querySharedPreferenceBoolean(Context context, String key) {
-        SharedPreferences sp = context.getSharedPreferences(Constants.generalSettingsTag, Context.MODE_PRIVATE);
-        return sp.getBoolean(key, false);
+        boolean result = false;
+        if (context != null) {
+            SharedPreferences sp = context.getSharedPreferences(Constants.generalSettingsTag,
+                    Context.MODE_PRIVATE);
+            result = sp.getBoolean(key, false);
+        }
+        return result;
     }
-    
-    public static void toggleSharedPreferenceBoolean(Context context,String key) {
-        SharedPreferences sp = context.getSharedPreferences("generalSettings", Context.MODE_PRIVATE);
-        boolean state = sp.getBoolean(key, false);
-        Editor editor = sp.edit();
-        editor.putBoolean(key, !state);
-        editor.apply();
-        Log.i(TAG, "Toggled " + key + " " + String.valueOf(state));
+
+    public static String querySharedPreferenceString(Context context, String key, String dftValue) {
+        String result = dftValue;
+        if (context != null) {
+            SharedPreferences sp = context.getSharedPreferences(Constants.generalSettingsTag,
+                    Context.MODE_PRIVATE);
+            result = sp.getString(key, dftValue);
+        }
+        return result;
+    }
+
+    public static void setSharedPreferenceString(Context context, String key, String value) {
+        if (context != null) {
+            SharedPreferences sp = context.getSharedPreferences(Constants.generalSettingsTag,
+                    Context.MODE_PRIVATE);
+            Editor editor = sp.edit();
+            editor.putString(key, value);
+            editor.apply();
+            Log.i(TAG, "Set: " + key + " to value: " + value);
+        }
+    }
+
+
+    public static void toggleSharedPreferenceBoolean(Context context, String key) {
+        if (context != null) {
+            SharedPreferences sp = context.getSharedPreferences(Constants.generalSettingsTag,
+                    Context.MODE_PRIVATE);
+            boolean state = sp.getBoolean(key, false);
+            Editor editor = sp.edit();
+            editor.putBoolean(key, !state);
+            editor.apply();
+            Log.i(TAG, "Toggled " + key + " " + String.valueOf(state));
+        }
     }
     
     

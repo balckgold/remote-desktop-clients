@@ -3,11 +3,11 @@ COMMON_ROOT	:= ../libs/deps/$(TARGET_ARCH_ABI)
 PREBUILT_ROOT   := $(COMMON_ROOT)/root
 GSTREAMER_ROOT  := $(COMMON_ROOT)/gstreamer
 
-# Add prebuilt libraries to avoid deletion.
 include $(CLEAR_VARS)
-LOCAL_MODULE := libsqlcipher
-LOCAL_SRC_FILES := ../libs/deps/android-database-sqlcipher/libs/$(TARGET_ARCH_ABI)/libsqlcipher.so
-include $(PREBUILT_SHARED_LIBRARY)
+LOCAL_MODULE            := opus
+LOCAL_SRC_FILES         := $(GSTREAMER_ROOT)/lib/libopus.a
+LOCAL_EXPORT_C_INCLUDES := $(GSTREAMER_ROOT)/include
+include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE            := iconv
@@ -51,11 +51,6 @@ LOCAL_SRC_FILES         := $(PREBUILT_ROOT)/lib/libgovirt.a
 LOCAL_EXPORT_C_INCLUDES := $(PREBUILT_ROOT)/include/govirt-1.0
 include $(PREBUILT_STATIC_LIBRARY)
 
-include $(CLEAR_VARS)
-LOCAL_MODULE            := celt
-LOCAL_SRC_FILES         := $(PREBUILT_ROOT)/lib/libcelt051.a
-LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/$(PREBUILT_ROOT)/include
-include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE            := libcrypto
@@ -76,7 +71,7 @@ LOCAL_SRC_FILES         := $(PREBUILT_ROOT)/lib/libspice-client-glib-2.0.a
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/$(PREBUILT_ROOT)/include/spice-client-glib-2.0 \
                            $(LOCAL_PATH)/$(PREBUILT_ROOT)/include/spice-1
 LOCAL_SHARED_LIBRARIES  := gstreamer_android
-LOCAL_STATIC_LIBRARIES  := celt libssl
+LOCAL_STATIC_LIBRARIES  := opus libssl
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)

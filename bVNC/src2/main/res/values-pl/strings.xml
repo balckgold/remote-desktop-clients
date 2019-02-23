@@ -122,6 +122,7 @@
 
     <string name="ctrl_alt_del">Ctrl-Alt-Delete</string>
 
+    <string name="default_input_mode">Default Input Mode</string>
     <string name="delete_connection">Usuń połączenie</string>
     <string name="delete_key"/>
     <string name="delete_key_list"/>
@@ -557,7 +558,9 @@ Known issues:
 
     <string name="shift_check">Shift</string>
 
-    <string name="shortcut_label">Połączenie VNC</string>
+    <string name="shortcut_label_vnc">Połączenie VNC</string>
+    <string name="shortcut_label_rdp">Połączenie RDP</string>
+    <string name="shortcut_label_spice">Połączenie SPICE</string>
 
     <string name="showkbd_label">Klawiatura</string>
 
@@ -700,4 +703,6 @@ Known issues:
     <string name="vnc_server_empty">Pole serwera lub portu VNC jest puste. Nie można połączyć.</string>
 
     <string name="warning_cert_does_not_match"/>
+    <string name="copy_logcat">Copy Logcat</string>
+    <string name="log_copied">Logcat copied to clipboard. You can now paste it in an email or on the support forum. Please look through for any personal data before posting.</string>
 </resources>

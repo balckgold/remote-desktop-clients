@@ -122,6 +122,7 @@
 
     <string name="ctrl_alt_del">Ctrl-Alt-Del</string>
 
+    <string name="default_input_mode">Default Input Mode</string>
     <string name="delete_connection">Delete Connection</string>
     <string name="delete_key">Delete Selected Key</string>
     <string name="delete_key_list">Delete Key List</string>
@@ -565,7 +566,9 @@ Known issues:
 
     <string name="shift_check">Shift</string>
 
-    <string name="shortcut_label">VNC Connection</string>
+    <string name="shortcut_label_vnc">VNC Connection</string>
+    <string name="shortcut_label_rdp">RDP Connection</string>
+    <string name="shortcut_label_spice">SPICE Connection</string>
 
     <string name="showkbd_label">Keyboard</string>
 
@@ -700,4 +703,6 @@ Known issues:
     <string name="vnc_server_empty">VNC Server or port empty. Cannot connect!</string>
 
     <string name="warning_cert_does_not_match">WARNING: The saved x509 certificate or passed in signature does not match the current server certificate! This could be a man-in-the-middle attack. If you are aware of the key change you may proceed. </string>
+    <string name="copy_logcat">Copy Logcat</string>
+    <string name="log_copied">Logcat copied to clipboard. You can now paste it in an email or on the support forum. Please look through for any personal data before posting.</string>
 </resources>

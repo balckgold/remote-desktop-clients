@@ -23,6 +23,8 @@ android:layout_height="fill_parent">
 		<Button 
 			android:id="@+id/buttonGO" 
 			android:text="@string/connect_button"
+			android:background="#444444"
+			android:textColor="#dddddd"
 			android:textAppearance="?android:attr/textAppearanceMedium"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
@@ -364,5 +366,11 @@ android:layout_height="fill_parent">
 			android:textAppearance="?android:attr/textAppearanceLarge"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"/>
+		<Button
+			android:id="@+id/copyLogcat"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/copy_logcat"
+			android:textAppearance="?android:attr/textAppearanceLarge" />
 	</LinearLayout>
 </ScrollView>

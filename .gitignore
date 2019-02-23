@@ -19,6 +19,17 @@ eclipse_projects/remote-desktop-clients-libs-*.tar.gz
 
 Opaque/jni/libs/deps/
 Opaque/jni/libs/tar/
+Opaque/gst-build-x86/
+Opaque/java/
+Opaque/debug/
+Opaque/release/
+*/libs/sqlcipher-javadoc.jar
+*/libs/sqlcipher.jar
+*/libs/*/libgstreamer_android.so
+*/libs/*/libspice.so
+*/libs/*/libsqlcipher.so
+Opaque/src/main/assets/fontconfig/
+Opaque/src/main/assets/ssl/
 bVNC/debug/
 bVNC/gst-build-armeabi-v7a/
 bVNC/gst-build-x86/
@@ -108,7 +119,29 @@ obj/
 .idea/dataSources.ids
 .idea/sqlDataSources.xml
 .idea/dynamic.xml
-.idea/uiDesigner.xml
+.idea/caches
+.idea/codeStyles
+
+Opaque/.idea/libraries/
+Opaque/.idea/workspace.xml
+Opaque/.idea/tasks.xml
+Opaque/.idea/.name
+Opaque/.idea/compiler.xml
+Opaque/.idea/copyright/profiles_settings.xml
+Opaque/.idea/encodings.xml
+Opaque/.idea/misc.xml
+Opaque/.idea/modules.xml
+Opaque/.idea/scopes/scope_settings.xml
+Opaque/.idea/dictionaries
+Opaque/.idea/vcs.xml
+Opaque/.idea/jsLibraryMappings.xml
+Opaque/.idea/datasources.xml
+Opaque/.idea/dataSources.ids
+Opaque/.idea/sqlDataSources.xml
+Opaque/.idea/dynamic.xml
+Opaque/.idea/uiDesigner.xml
+Opaque/.idea/caches
+Opaque/.idea/codeStyles
 
 # OS-specific files
 .DS_Store
@@ -157,3 +190,5 @@ fabric.properties
 !/gradle/wrapper/gradle-wrapper.jar
 
 # End of AndroidStudio ###
+
+

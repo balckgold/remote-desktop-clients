@@ -79,8 +79,8 @@ public class RemoteSpicePointer extends RemotePointer {
 	}
 
 	@Override
-	public void moveMouseButton (int x, int y, int metaState) {
-		pointerMask = prevPointerMask;
+	public void moveMouse (int x, int y, int metaState) {
+		pointerMask = SPICE_MOUSE_BUTTON_MOVE;
 		sendPointerEvent (x, y, metaState, true);
 	}
 

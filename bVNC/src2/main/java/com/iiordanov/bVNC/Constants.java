@@ -24,7 +24,7 @@ package com.iiordanov.bVNC;
  * Keys for intent values
  */
 public class Constants {
-    
+
     public static final int SDK_INT = android.os.Build.VERSION.SDK_INT;
 
     public static final int CONN_TYPE_PLAIN        = 0;
@@ -37,6 +37,7 @@ public class Constants {
     public static final int SOCKET_CONN_TIMEOUT = 30 * 1000; //30 sec
     
     public static final int DEFAULT_SSH_PORT = 22;
+    public static final int LOGCAT_MAX_LINES = 500;
     public static volatile int DEFAULT_PROTOCOL_PORT = 5900;
     public static final int DEFAULT_VNC_PORT = 5900;
     public static final int DEFAULT_RDP_PORT = 3389;
@@ -207,7 +208,8 @@ public class Constants {
     public static final String forceLandscapeTag = "forceLandscape";
     public static final String rAltAsIsoL3ShiftTag = "rAltAsIsoL3Shift";
     public static final String leftHandedModeTag = "leftHandedModeTag";
-    
+    public static final String defaultInputMethodTag = "defaultInputMethod";
+
     public static final String ACTION_USB_PERMISSION = "com.iiordanov.aSPICE.USB_PERMISSION";
     public static final int usbDeviceTimeout = 5000;
     public static final int usbDevicePermissionTimeout = 15000;

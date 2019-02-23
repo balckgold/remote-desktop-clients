@@ -122,6 +122,7 @@
 
     <string name="ctrl_alt_del">Ctrl-Alt-Del</string>
 
+    <string name="default_input_mode">Режим ввода по умолчанию</string>
     <string name="delete_connection">Удалить подключение</string>
     <string name="delete_key">Удалить выбранный ключ</string>
     <string name="delete_key_list">Удалить список ключей</string>
@@ -558,7 +559,9 @@
 
     <string name="shift_check">Shift</string>
 
-    <string name="shortcut_label">VNC Соединение</string>
+    <string name="shortcut_label_vnc">VNC Соединение</string>
+    <string name="shortcut_label_rdp">RDP Соединение</string>
+    <string name="shortcut_label_spice">SPICE Соединение</string>
 
     <string name="showkbd_label">Клавиатура</string>
 
@@ -701,4 +704,6 @@
     <string name="vnc_server_empty">VNC-сервер или порт пусты. Соединение невозможно!</string>
 
     <string name="warning_cert_does_not_match">ПРЕДУПРЕЖДЕНИЕ! Сохраненный x509 сертификат или предоставленная подпись не соответствует текущему сертификату сервера! Это может быть атака типа \"Man in the middle\". Если вам известно об изменении ключей, можете продолжить подключение. </string>
+    <string name="copy_logcat">Copy Logcat</string>
+    <string name="log_copied">Logcat copied to clipboard. You can now paste it in an email or on the support forum. Please look through for any personal data before posting.</string>
 </resources>

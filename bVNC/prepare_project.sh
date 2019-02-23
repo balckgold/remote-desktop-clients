@@ -1,7 +1,6 @@
-#!/bin/bash
+#!/bin/bash -e
 
 SKIP_BUILD=false
-FREERDP_ANDROID_TARGET=25
 
 usage () {
   echo "$0 bVNC|freebVNC|aSPICE|freeaSPICE|aRDP|freeaRDP|libs /path/to/your/android/ndk /path/to/your/android/sdk"
@@ -57,12 +56,13 @@ ln -sf AndroidManifest.xml.$PRJ AndroidManifest.xml
 if [ "$SKIP_BUILD" == "false" ]
 then
   pushd jni/libs
-  ./build-deps.sh -j 4 -n $ANDROID_NDK build
+  ./build-deps.sh -j 4 -n $ANDROID_NDK build $PRJ
   popd
 
-  ${ANDROID_NDK}/ndk-build
-  ${ANDROID_SDK}/tools/android update project --target android-${FREERDP_ANDROID_TARGET} \
-                               -p jni/libs/deps/FreeRDP/client/Android/Studio/freeRDPCore/src/main
+  if echo $PRJ | grep -q "SPICE\|Opaque"
+  then
+    ${ANDROID_NDK}/ndk-build
+  fi
 fi
 
 if [ -n "$BUILDING_DEPENDENCIES" ]
@@ -71,22 +71,22 @@ then
   exit 0
 fi
 
-freerdp_libs_dir=jni/libs/deps/FreeRDP/client/Android/Studio/freeRDPCore/src/main/jniLibs
-freerdp_libs_link=jni/libs/deps/FreeRDP/client/Android/Studio/freeRDPCore/src/main/libs
+freerdp_libs_dir=../freeRDPCore/src/main/jniLibs
+freerdp_libs_link=../freeRDPCore/src/main/libs
 if [ "$PRJ" == "bVNC" -o "$PRJ" == "freebVNC" ]
 then
   clean_libs "sqlcipher" libs/
-  [ -d ${freerdp_libs_dir} ] && mv ${freerdp_libs_dir} ${freerdp_libs_dir}.DISABLED
+  [ -d ${freerdp_libs_dir} ] && rm -rf ${freerdp_libs_dir}.DISABLED && mv ${freerdp_libs_dir} ${freerdp_libs_dir}.DISABLED
   rm -rf ${freerdp_libs_link}
 elif [ "$PRJ" == "aRDP" -o "$PRJ" == "freeaRDP" ]
 then
   clean_libs "sqlcipher" libs/
-  [ -d ${freerdp_libs_dir}.DISABLED ] && mv ${freerdp_libs_dir}.DISABLED ${freerdp_libs_dir}
+  [ -d ${freerdp_libs_dir}.DISABLED ] && rm -rf ${freerdp_libs_dir} && mv ${freerdp_libs_dir}.DISABLED ${freerdp_libs_dir}
   rm -rf ${freerdp_libs_link}
   ln -s jniLibs ${freerdp_libs_link}
 elif [ "$PRJ" == "aSPICE" -o "$PRJ" == "freeaSPICE" ]
 then
-  [ -d ${freerdp_libs_dir} ] && mv ${freerdp_libs_dir} ${freerdp_libs_dir}.DISABLED
+  [ -d ${freerdp_libs_dir} ] && rm -rf ${freerdp_libs_dir}.DISABLED && mv ${freerdp_libs_dir} ${freerdp_libs_dir}.DISABLED
   rm -rf ${freerdp_libs_link}
 fi
 

@@ -106,6 +106,23 @@ do_configure() {
     #
     # Use only our pkg-config library directory, even on cross builds
     # https://bugzilla.redhat.com/show_bug.cgi?id=688171
+    echo Current working directory: $(pwd)
+    echo Executing: ./configure \
+            --host=${build_host} \
+            --build=${build_system} \
+            --prefix=\"${prefix}\" \
+            --enable-static \
+            --disable-shared \
+            --disable-dependency-tracking \
+            PKG_CONFIG=\"pkg-config --static\" \
+            PKG_CONFIG_LIBDIR=\"${root}/share/pkgconfig:${root}/lib/pkgconfig:${gst}/lib-fixed/pkgconfig\" \
+            PKG_CONFIG_PATH= \
+            CPPFLAGS=\"${cppflags} -I${root}/include -I${gst}/include\" \
+            CFLAGS=\"${cflags}\" \
+            CXXFLAGS=\"${cxxflags}\" \
+            LDFLAGS=\"${ldflags} -L${root}/lib -L${gst}/lib-fixed\" \
+            "$@"
+
     ./configure \
             --host=${build_host} \
             --build=${build_system} \
@@ -155,18 +172,36 @@ build_one() {
         case "$abi" in
         armeabi)
             os=android
+            arch=arm
             ;;
         armeabi-v7a)
-            os=android-armv7
+            os=android-armeabi
+            arch=arm
             ;;
         x86)
             os=android-x86
+            arch=x86
             ;;
         *)
             echo "Unsupported ABI: $abi"
             exit 1
             ;;
         esac
+
+        echo Current working directory: $(pwd)
+        echo Executing: ./Configure \
+                \"${os}\" \
+                --prefix=\"$root\" \
+                --cross-compile-prefix=\"${build_host}-\" \
+                no-zlib \
+                no-hw \
+                no-ssl3 \
+                ${cppflags} \
+                ${cflags} \
+                ${ldflags}
+
+        export ANDROID_SYSROOT="${ndkdir}/platforms/android-${android_api}/arch-${arch}"
+        export CROSS_SYSROOT="$ANDROID_SYSROOT"
         ./Configure \
                 "${os}" \
                 --prefix="$root" \
@@ -194,19 +229,28 @@ build_one() {
                 --with-gtk=no \
                 --enable-dbus=no \
                 --enable-controller=no \
-                --with-audio=gstreamer \
+                --enable-gstaudio \
+                --disable-celt051 \
+                --enable-opus \
                 LIBS="-lm"
+
+	# Disable tests and tools
+        sed -i 's/tests//' spice-common/Makefile
+        sed -i 's/tests//' Makefile
+        sed -i 's/tools//' Makefile
+
         patch -p1 < "${basedir}/spice-gtk-exit.patch"
         make $parallel
 
         # Patch to avoid SIGBUS due to unaligned accesses on ARM7
-        patch -p1 < "${basedir}/spice-marshaller-sigbus.patch"
+        # seems it is no longer needed since spice-gtk 0.35
+        #patch -p1 < "${basedir}/spice-marshaller-sigbus.patch"
         make $parallel
 
         make install
 
         # Put some header files in a version-independent location.
-        for f in config.h src/*.h spice-common/common
+        for f in config.h tools/*.h src/*.h spice-common/common
         do
             rsync -a $f ${root}/include/spice-1/
         done
@@ -220,7 +264,8 @@ build_one() {
         autoreconf -fi
         do_configure \
                 --enable-introspection=no \
-                --without-gnome
+                --without-gnome \
+                --disable-glibtest
         make $parallel
         make install
         ;;
@@ -264,7 +309,8 @@ build_one() {
                 --disable-crywrap \
                 --without-p11-kit \
                 --disable-doc \
-                --disable-tests
+                --disable-tests \
+                --with-included-unistring
         make $parallel
         make install
 
@@ -273,7 +319,8 @@ build_one() {
                 --disable-crywrap \
                 --without-p11-kit \
                 --disable-doc \
-                --disable-tests
+                --disable-tests \
+                --with-included-unistring
         make $parallel
         make install
         ;;
@@ -363,6 +410,7 @@ setup() {
         ${ndkdir}/build/tools/make_standalone_toolchain.py \
                 --api "${android_api}" \
                 --arch "${arch}" \
+                --deprecated-headers \
                 --install-dir "${toolchain}"
     fi
     if ! [ -e "${toolchain}/bin/${build_host}-gcc" ] ; then
@@ -390,18 +438,10 @@ build() {
         mkdir -p "${gst}-${abi}"
         tar xf "$(tarpath ${pkgstr})" -C "${gst}-${abi}"
         ln -s "${gst}-${abi}/${gstarch}" "${gst}"
-        # The .la files point to shared libraries that don't exist, so
-        # linking fails.  We can't delete the .la files outright because
-        # the GStreamer ndk-build glue depends on them.  Create a separate
-        # lib directory with no .la files.
-        cp -a "${gst}/lib" "${gst}/lib-fixed"
-        rm -f ${gst}/lib-fixed/*.la
-        # Fix paths in .pc files
+
         origroot=$(grep '^prefix' "${gst}/lib/pkgconfig/gstreamer-1.0.pc" | \
                 sed -e 's/prefix=//')
-        sed -i -e "s|${origroot}/lib|${gst}/lib-fixed|g" \
-               -e "s|${origroot}|${gst}|g" \
-                ${gst}/lib-fixed/pkgconfig/*.pc
+
         # Add pkg-config file for libjpeg so Android.mk can ask for its
         # symbols to be exposed in the gstreamer .so
         cat > ${gst}/lib/pkgconfig/jpeg.pc <<EOF
@@ -416,10 +456,23 @@ Version: 8
 Libs: -L\${libdir} -ljpeg
 Cflags: -I\${includedir}
 EOF
+
+        # The .la files point to shared libraries that don't exist, so
+        # linking fails.  We can't delete the .la files outright because
+        # the GStreamer ndk-build glue depends on them.  Create a separate
+        # lib directory with no .la files.
+        cp -a "${gst}/lib" "${gst}/lib-fixed"
+        rm -f ${gst}/lib-fixed/*.la
+        # Fix paths in .pc files
+        sed -i -e "s|${origroot}/lib|${gst}/lib-fixed|g" \
+               -e "s|${origroot}|${gst}|g" \
+                ${gst}/lib-fixed/pkgconfig/*.pc
+
         # Drop pkg-config file for opus, since static libopus and static
         # libcelt051 can't be linked into the same binary due to symbol
         # conflicts, and RHEL's libspice-server doesn't link with opus
-        rm -f ${gst}/lib-fixed/pkgconfig/opus.pc
+        # Seems it works now, so enabling it over usage of Celt
+        #rm -f ${gst}/lib-fixed/pkgconfig/opus.pc
     fi
 
     # Build
@@ -478,6 +531,16 @@ fail_handler() {
 
 build_freerdp() {
     pushd deps
+
+    if [ -f FREERDP_BUILT ]
+    then
+      echo ; echo
+      echo "FreeRDP was previously built. Remove $(realpath FREERDP_BUILT) if you want to rebuild it."
+      echo ; echo
+      sleep 5
+      return
+    fi
+
     basedir="$(pwd)"
 
     missing_artifact="false"
@@ -520,47 +583,26 @@ build_freerdp() {
         # Something wrong with NDK?
         sed -i 's/static int pthread_mutex_timedlock/int pthread_mutex_timedlock/' winpr/libwinpr/synch/wait.c
 
-        patch -p0 < "${basedir}/../freerdp_drive-file.patch"
-        patch -p1 < "${basedir}/../freerdp_cmakelists.patch"
+        for f in ${basedir}/../freerdp_*.patch
+        do
+            patch -N -p1 < ${f}
+        done
+
+        cp "${basedir}/../freerdp_AndroidManifest.xml" client/Android/Studio/freeRDPCore/src/main/AndroidManifest.xml
 
         export ANDROID_NDK="${ndkdir}"
         ./scripts/android-build-freerdp.sh
 
+        sed -i 's/implementationSdkVersion/compileSdkVersion/; s/.*rootProject.ext.versionName.*//; s/.*.*buildToolsVersion.*.*//; s/compile /implementation /' \
+               client/Android/Studio/freeRDPCore/build.gradle
+
         # Prepare the FreeRDPCore project for importing into Eclipse
         rm -f ../../../../../FreeRDP
         ln -s Opaque/jni/libs/deps/${freerdp_build} ../../../../../FreeRDP
-        ln -s jniLibs client/Android/Studio/freeRDPCore/src/main/libs
-        ln -s java client/Android/Studio/freeRDPCore/src/main/src
     fi
+
     popd
-}
-
-build_sqlcipher() {
-    pushd deps
-    if [ ! -f ${sqlcipher_build}/${sqlcipher_artifacts} ]
-    then
-
-        if [ ! -d ${sqlcipher_build} ]
-        then
-            git clone ${sqlcipher_url}
-        fi
-
-        pushd ${sqlcipher_build}
-        git fetch
-        git checkout v${sqlcipher_ver}
-	git reset --hard
-
-        export ANDROID_NDK_ROOT="${ndkdir}"
-        make init
-
-        rm -f libs/sqlcipher.jar
-        make
-        popd
-    fi
-    pushd ${sqlcipher_build}
-    rsync -a ./libs/ ../../../../../bVNC/libs/
-    popd
-    popd
+    touch FREERDP_BUILT
 }
 
 
@@ -595,8 +637,11 @@ build)
     do
         build "$curabi"
     done
-    build_sqlcipher
-    build_freerdp
+
+    if echo $2 | grep -q RDP
+    then
+        build_freerdp
+    fi
 
     echo
     echo "Now you can run ndk-build if building aSPICE."

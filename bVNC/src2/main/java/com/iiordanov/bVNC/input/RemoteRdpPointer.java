@@ -68,8 +68,8 @@ public class RemoteRdpPointer extends RemotePointer {
     }
 
     @Override
-    public void moveMouseButton (int x, int y, int metaState) {
-        pointerMask = prevPointerMask;
+    public void moveMouse (int x, int y, int metaState) {
+        pointerMask = MOUSE_BUTTON_MOVE | prevPointerMask;
         sendPointerEvent (x, y, metaState, true);
     }
 
